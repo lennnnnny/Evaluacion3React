@@ -1,7 +1,19 @@
 import { useAuth } from '@/components/context/auth-context';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, TextInput, View, } from 'react-native';
+import {
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 
 export default function LoginScreen() {
   // Estados para almacenar el nombre de usuario y la contraseña
@@ -33,29 +45,43 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.inputContainer}>Login Screen</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Username o Email"
-        placeholderTextColor="#615b5bff"
-        onChangeText={handleUsernameChange}
-        value={username}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#615b5bff"
-        secureTextEntry
-        onChangeText={handlePasswordChange}
-        value={password}
-      />
-      
-      <Pressable style={styles.button} onPress={handleLogin}>
-        <Text>Login</Text>
-      </Pressable>
-    </View>
-    
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={[styles.container, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.innerContainer}>
+            <Text style={styles.inputContainer}>Login Screen</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Username o Email"
+              placeholderTextColor="#615b5bff"
+              onChangeText={handleUsernameChange}
+              value={username}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              textContentType="username"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor="#615b5bff"
+              secureTextEntry
+              onChangeText={handlePasswordChange}
+              value={password}
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="password"
+            />
+
+            <Pressable style={styles.button} onPress={handleLogin}>
+              <Text>Login</Text>
+            </Pressable>
+          </View>
+        </TouchableWithoutFeedback>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 const styles = StyleSheet.create({
@@ -89,6 +115,12 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#f7f7f7', // o '#f7f7f7' si el contenedor es blanco
     color: '#000', 
+  },
+  innerContainer: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   button: {
     marginTop: 8,

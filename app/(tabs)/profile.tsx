@@ -23,13 +23,12 @@ export default function ProfileScreen() {
   //los botones se manejan con la etiqueta <Pressable> y se le asigna la función onPress que se va a ejecutar al presionarlo
   //el modal se abre con un enlace que usa la etiqueta <Link> y se le asigna la ruta del modal en el atributo href
   return (
-    <View style={styles.container}>  
-      <Text>Hello, World!</Text>
-      <Text>Hola {user?.name}</Text>
-      <Pressable style={styles.button} onPress={handleLogout}>
-        <Text>Logout</Text>
-      </Pressable>
-    </View>
+      <View style={styles.container}>  
+        <Text style={styles.titleText}>Hola!, {user?.name}</Text>
+        <Pressable style={styles.button} onPress={handleLogout}>
+          <Text style={styles.textColor} >Logout</Text>
+        </Pressable>
+      </View>
   );
 }
 

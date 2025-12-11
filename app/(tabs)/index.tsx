@@ -1,6 +1,6 @@
 import { useAuth } from '@/components/context/auth-context';
-import { Link, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { StyleSheet, Text, View } from 'react-native';
 
 
 export default function HomeScreen() {
@@ -25,12 +25,6 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>  
       <Text style={styles.titleText}>Hola!, {user?.name}</Text>
-      <Link href="/login" style={styles.button}>
-        <Text>Go to Login</Text>
-      </Link>
-      <Pressable style={styles.button} onPress={handleLogout}>
-        <Text style={styles.textColor} >Logout</Text>
-      </Pressable>
     </View>
   );
 }
