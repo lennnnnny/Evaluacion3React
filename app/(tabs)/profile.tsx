@@ -1,15 +1,14 @@
 import { useAuth } from '@/components/context/auth-context';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 
-export default function HomeScreen() {
+export default function ProfileScreen() {
 
   const { user, logout } = useAuth();
 
   const router = useRouter();
 
-  
 
   const handleLogout = () => {
     logout();
@@ -17,6 +16,7 @@ export default function HomeScreen() {
   }
 
   console.log("Rendering ProfileScreen with user:", user);
+
   //en el return se define la estructura de la pantalla home screen
 
   //los estilos se definen dentro de los <> con style= seguido del nombre del estilo, ademas se les asigna la propiedad onPress con el nombre de la función que se va a ejecutar
@@ -24,12 +24,10 @@ export default function HomeScreen() {
   //el modal se abre con un enlace que usa la etiqueta <Link> y se le asigna la ruta del modal en el atributo href
   return (
     <View style={styles.container}>  
-      <Text style={styles.titleText}>Hola!, {user?.name}</Text>
-      <Link href="/login" style={styles.button}>
-        <Text>Go to Login</Text>
-      </Link>
+      <Text>Hello, World!</Text>
+      <Text>Hola {user?.name}</Text>
       <Pressable style={styles.button} onPress={handleLogout}>
-        <Text style={styles.textColor} >Logout</Text>
+        <Text>Logout</Text>
       </Pressable>
     </View>
   );
@@ -48,9 +46,8 @@ const styles = StyleSheet.create({ //acá se definen los estilos
     backgroundColor: 'blue',
     borderRadius: 5,
     color: '#fff',
-    
   },
-  textColor:{
+    textColor:{
     color: '#fff',
   },
   titleText:{

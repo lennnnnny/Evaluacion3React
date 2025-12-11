@@ -1,13 +1,17 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-
+import { useAuth } from '@/components/context/auth-context';
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!user) router.replace('/login'); // o router.replace('/auth/login') según ruta
+  }, [user]);
 
   return (
     <Tabs
@@ -24,10 +28,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="tasks"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Tareas',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet.clipboard.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Perfil',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
     </Tabs>
