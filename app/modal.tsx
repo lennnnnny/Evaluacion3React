@@ -1,18 +1,19 @@
 import { Link } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-
+//acá se define el componente ModalScreen que es la pantalla modal que se abre desde el home screen 
+//y que contiene un enlace para volver al home screen 
+//los estilos se definen al final del archivo con StyleSheet.create
+//la propiedad dismissTo en el enlace indica que al hacer clic en el enlace se debe cerrar la pantalla modal y volver a la pantalla anterior
 export default function ModalScreen() {
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="title">This is a modal</ThemedText>
+    <View style={styles.container}>
+      <Text>This is a modal</Text>
       <Link href="/" dismissTo style={styles.link}>
-        <ThemedText type="link">Go to home screen</ThemedText>
+        <Text style={styles.title}>Go back to home screen</Text>
       </Link>
-    </ThemedView>
-  );
+    </View>
+  ); 
 }
 
 const styles = StyleSheet.create({
@@ -26,4 +27,8 @@ const styles = StyleSheet.create({
     marginTop: 15,
     paddingVertical: 15,
   },
+  title:{
+    marginTop: 20,
+    color: '#007AFF',
+  }
 });

@@ -1,98 +1,78 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useAuth } from '@/components/context/auth-context';
+import { Link, useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+   //acá definimos una constante de nombre count, una fuincion llamada setCount y se asigna el valor inicial 0
+   //en react se usa useState para definir estados
+  const [count, setCount] = useState(0);
+  //acá se define otra constante de nombre open y nombre de funcion setOpen con valor inicial false
+  const [open, setOpen] = useState(false);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const { user, logout } = useAuth();
+
+  const router = useRouter();
+
+  //acá se define la función handleIncrement para incrementar el valor del contador
+  const handleIncrement = () => {
+    setCount(count + 1);
+  }
+
+  //acá se define una funcion de nombre handleToggle para cambiar el valor de open
+  const handleToggle = () => {
+    setOpen(!open); //el operador ! invierte el valor de open
+  }
+
+  const handleLogout = () => {
+    logout();
+    router.replace('/login');
+  }
+
+  //en el return se define la estructura de la pantalla home screen
+
+  //los estilos se definen dentro de los <> con style= seguido del nombre del estilo, ademas se les asigna la propiedad onPress con el nombre de la función que se va a ejecutar
+  //los botones se manejan con la etiqueta <Pressable> y se le asigna la función onPress que se va a ejecutar al presionarlo
+  //el modal se abre con un enlace que usa la etiqueta <Link> y se le asigna la ruta del modal en el atributo href
+  return (
+    <View style={styles.container}>  
+      <Text>Hello, World!</Text>
+      <Text>This is a counter: {count}</Text>
+      <Pressable style={styles.button} onPress={handleIncrement}>
+        <Text>Increment</Text>
+      </Pressable>
+      <Text>The toggle is {open ? 'Open' : 'Closed'}</Text>
+      <Pressable style={styles.button} onPress={handleToggle}>
+        <Text>Toggle</Text>
+      </Pressable>
+      <Text>Hola {user?.name}</Text>
+      <Link href="/modal" style={styles.button}>
+        <Text>Open Modal</Text>
+      </Link> 
+      <Link href="/login" style={styles.button}>
+        <Text>Go to Login</Text>
+      </Link>
+      <Pressable style={styles.button} onPress={handleLogout}>
+        <Text>Logout</Text>
+      </Pressable>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+const styles = StyleSheet.create({ //acá se definen los estilos
+  container: { 
+    flex: 1,
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    color: '#fff',
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  button: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: 'blue',
+    borderRadius: 5,
+    color: '#fff',
+    
+  }
 });
