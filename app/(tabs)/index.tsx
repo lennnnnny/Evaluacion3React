@@ -4,18 +4,12 @@ import { StyleSheet, Text, View } from 'react-native';
 
 
 export default function HomeScreen() {
-
   const { user, logout } = useAuth();
-
   const router = useRouter();
-
-  
-
   const handleLogout = () => {
     logout();
     router.replace('/login');
   }
-
   console.log("Rendering ProfileScreen with user:", user);
   //en el return se define la estructura de la pantalla home screen
 

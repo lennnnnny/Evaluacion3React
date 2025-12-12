@@ -19,6 +19,7 @@ const MAPPING = {
   'chevron.right': 'chevron-right',
   'person.fill': 'person',
   'list.bullet.clipboard.fill': 'add-task',
+  'trash.circle': 'delete',
 } as IconMapping;
 
 /**

@@ -1,5 +1,5 @@
 import { useAuth } from '@/components/context/auth-context';
-import { HapticTab } from '@/components/haptic-tab';
+import { HapticTab } from '@/components/ui/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { Tabs, useRouter } from 'expo-router';
