@@ -4,8 +4,8 @@ import { IconSymbol } from './icon-symbol';
 
 interface TaskItemProps {
    task: Task;
-   onToggle?: (id: number) => void;
-   onRemove?: (id: number) => void;
+   onToggle?: (id: string) => void;
+   onRemove?: (id: string) => void;
 }
 
 export default function TaskListItem({ task, onToggle, onRemove }: TaskItemProps) {

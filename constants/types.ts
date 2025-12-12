@@ -1,7 +1,7 @@
 import { } from 'react-native';
 
 export interface Task {
-  id: number;
+  id: string;
   title: string;
   completed: boolean;
 }

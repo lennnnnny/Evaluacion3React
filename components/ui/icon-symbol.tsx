@@ -20,6 +20,8 @@ const MAPPING = {
   'person.fill': 'person',
   'list.bullet.clipboard.fill': 'add-task',
   'trash.circle': 'delete',
+  'plus.circle': 'add-circle',
+  'plus': 'add',
 } as IconMapping;
 
 /**

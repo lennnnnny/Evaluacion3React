@@ -1,6 +1,6 @@
 import { StyleProp, StyleSheet, Text, TextStyle } from 'react-native';
 
-interface TitleProps {  
+export interface TitleProps {  
     style?: StyleProp<TextStyle>; //el ? indica que es opcional
     children?: React.ReactNode;
 }
