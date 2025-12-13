@@ -1,7 +1,12 @@
+import getAuthService from '@/services/auth-service';
 import { clearSessionFromStorage, loadSessionFromStorage, saveSessionToStorage } from '@/utils/storage';
 import { useRouter } from 'expo-router';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
+
+
+
+
 
 
 
@@ -11,14 +16,9 @@ export interface User{
 }
 interface AuthContextProps {
     user: User | null;
-    login: (username: string, password: string) => void;
+    login: (email: string, password: string) => void;
     logout: () => void;
 }
-
-const EXPECTED_USERS = [
-    { id: '1', name: 'user', password: '1234' },
-    { id: '2', name: 'admin', password: 'admin' },
-]
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
@@ -41,17 +41,17 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         
     }, [user, router]);
 
-    const login = (username: string, password: string) => {
-        const foundUser = EXPECTED_USERS.find(
-            (u) => u.name === username && u.password === password
-        );  
-        if (foundUser) {
-            setUser({ id: foundUser.id, name: foundUser.name });
-            saveSessionToStorage({ id: foundUser.id, name: foundUser.name });
-        }  else {
-            Alert.alert('Login failed', 'Invalid username or password');
+    const login = async (email: string, password: string) => {
+        const authClient = getAuthService();
+        try {
+            const loginData = await authClient.login({email:email, password:password});
+            console.log("Login exitoso:", loginData);
+            saveSessionToStorage(loginData.data);
+            setUser(loginData.data.user);
+        } catch (error) {
+            Alert.alert("Error de auntenticación", (error as Error).message);
         }
-    }; 
+    };
 
     const logout = () => {
         setUser(null);
