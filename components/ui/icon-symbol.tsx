@@ -20,8 +20,13 @@ const MAPPING = {
   'person.fill': 'person',
   'list.bullet.clipboard.fill': 'add-task',
   'trash.circle': 'delete',
+  'mappin': 'place',
+  'mappin.and.ellipse': 'place',
   'plus.circle': 'add-circle',
+  'moon': 'dark_mode',
+  'sun.max': 'light_mode',
   'plus': 'add',
+  'chevron.left': 'chevron-left',
 } as IconMapping;
 
 /**

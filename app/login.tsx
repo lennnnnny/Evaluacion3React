@@ -1,4 +1,5 @@
 import { useAuth } from '@/components/context/auth-context';
+import { useTheme } from '@/components/context/theme-context';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -20,6 +21,7 @@ export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const {login} = useAuth();
+  const { colors, scheme } = useTheme();
   
   // Hook para la navegación
   const router = useRouter();
@@ -48,14 +50,14 @@ export default function LoginScreen() {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView contentContainerStyle={[styles.container, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.container, { flexGrow: 1, backgroundColor: colors.background }]} keyboardShouldPersistTaps="handled">
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.innerContainer}>
-            <Text style={styles.inputContainer}>Login Screen</Text>
+            <Text style={[styles.inputContainer, { color: colors.text }]}>Login Screen</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { borderColor: colors.icon, backgroundColor: scheme === 'dark' ? '#2a2a2a' : '#f7f7f7', color: colors.text }]}
               placeholder="Username o Email"
-              placeholderTextColor="#615b5bff"
+              placeholderTextColor={colors.icon}
               onChangeText={handleUsernameChange}
               value={username}
               autoCapitalize="none"
@@ -64,9 +66,9 @@ export default function LoginScreen() {
               textContentType="username"
             />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { borderColor: colors.icon, backgroundColor: scheme === 'dark' ? '#2a2a2a' : '#f7f7f7', color: colors.text }]}
               placeholder="Password"
-              placeholderTextColor="#615b5bff"
+              placeholderTextColor={colors.icon}
               secureTextEntry
               onChangeText={handlePasswordChange}
               value={password}
@@ -75,8 +77,8 @@ export default function LoginScreen() {
               textContentType="password"
             />
 
-            <Pressable style={styles.button} onPress={handleLogin}>
-              <Text>Login</Text>
+            <Pressable style={[styles.button, { backgroundColor: colors.tint }]} onPress={handleLogin}>
+              <Text style={{ color: colors.background }}>Login</Text>
             </Pressable>
           </View>
         </TouchableWithoutFeedback>

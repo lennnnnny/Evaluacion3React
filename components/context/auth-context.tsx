@@ -1,7 +1,11 @@
-import { createContext, useContext, useState } from 'react';
+import { clearSessionFromStorage, loadSessionFromStorage, saveSessionToStorage } from '@/utils/storage';
+import { useRouter } from 'expo-router';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
-interface User{
+
+
+export interface User{
     id: string;
     name: string;
 }
@@ -20,6 +24,22 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const router = useRouter();
+    useEffect(() => {
+        loadSessionFromStorage()
+        .then((storedUser) => {
+            if (storedUser) {
+                setUser(storedUser);
+            }
+        })
+    }, []);
+
+    useEffect(() => {
+        if (user) {
+            router.replace( '/(tabs)');
+        }
+        
+    }, [user, router]);
 
     const login = (username: string, password: string) => {
         const foundUser = EXPECTED_USERS.find(
@@ -27,6 +47,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         );  
         if (foundUser) {
             setUser({ id: foundUser.id, name: foundUser.name });
+            saveSessionToStorage({ id: foundUser.id, name: foundUser.name });
         }  else {
             Alert.alert('Login failed', 'Invalid username or password');
         }
@@ -34,6 +55,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     const logout = () => {
         setUser(null);
+        clearSessionFromStorage();
     }
 
     return (

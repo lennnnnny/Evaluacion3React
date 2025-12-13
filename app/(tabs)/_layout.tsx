@@ -11,7 +11,7 @@ export default function TabLayout() {
 
   useEffect(() => {
     if (!user) router.replace('/login'); // o router.replace('/auth/login') según ruta
-  }, [user]);
+  }, [user, router]);
 
   return (
     <Tabs

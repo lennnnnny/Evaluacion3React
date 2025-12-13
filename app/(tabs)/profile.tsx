@@ -1,4 +1,5 @@
 import { useAuth } from '@/components/context/auth-context';
+import { useTheme } from '@/components/context/theme-context';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -6,6 +7,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 export default function ProfileScreen() {
 
   const { user, logout } = useAuth();
+  const { colors } = useTheme();
 
   const router = useRouter();
 
@@ -23,10 +25,10 @@ export default function ProfileScreen() {
   //los botones se manejan con la etiqueta <Pressable> y se le asigna la función onPress que se va a ejecutar al presionarlo
   //el modal se abre con un enlace que usa la etiqueta <Link> y se le asigna la ruta del modal en el atributo href
   return (
-      <View style={styles.container}>  
-        <Text style={styles.titleText}>Hola!, {user?.name}</Text>
-        <Pressable style={styles.button} onPress={handleLogout}>
-          <Text style={styles.textColor} >Logout</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>  
+        <Text style={[styles.titleText, { color: colors.text }]}>Hola!, {user?.name}</Text>
+        <Pressable style={[styles.button, { backgroundColor: colors.tint }]} onPress={handleLogout}>
+          <Text style={[styles.textColor, { color: colors.background }]} >Logout</Text>
         </Pressable>
       </View>
   );

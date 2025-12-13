@@ -1,3 +1,4 @@
+import { useTheme } from '@/components/context/theme-context';
 import { StyleProp, StyleSheet, Text, TextStyle } from 'react-native';
 
 export interface TitleProps {  
@@ -9,8 +10,9 @@ export interface TitleProps {
 //el componente Title recibe un estilo y un texto como props y se puede utilizar en otros componentes
 // utilizando <Title>>Texto</Title> , como un componente reutilizable
 export default function Title({ style, children }: TitleProps) {
+    const { colors } = useTheme();
     return (
-        <Text style={[styles.titleText, style]}>
+        <Text style={[styles.titleText, { color: colors.text }, style]}>
             {children}
         </Text>
     );
