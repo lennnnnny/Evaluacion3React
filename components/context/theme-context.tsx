@@ -29,10 +29,10 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
 
   const toggleScheme = () => setScheme(s => (s === 'dark' ? 'light' : 'dark'));
   useEffect(() => {
-    saveThemeToStorage(scheme);
+    saveThemeToStorage(scheme as string);
   }, [scheme]);
 
-  const value = useMemo(() => ({ scheme, colors: Colors[scheme], toggleScheme }), [scheme]);
+  const value = useMemo(() => ({ scheme, colors: Colors[scheme as 'light' | 'dark'], toggleScheme }), [scheme]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

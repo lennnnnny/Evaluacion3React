@@ -1,5 +1,8 @@
 import { useTheme } from '@/components/context/theme-context';
 import { Task } from '@/constants/types';
+import imageService from '@/services/image-service';
+import getTodoService from '@/services/todo-services';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { launchCameraAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 import { Accuracy, getCurrentPositionAsync, requestForegroundPermissionsAsync } from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
@@ -9,15 +12,17 @@ import Button from './button';
 import Title from './title';
 
 interface NewTaskProps {
-    onClose: () => void;
-    onTaskSave: (task:Task) => void;
+  onClose: () => void;
+  onTaskSave: (task: any) => void; // created or updated todo from API
+  initialTask?: Task | null; // if provided, operate as edit
 }
 
-export default function NewTask({ onClose, onTaskSave }: NewTaskProps) {
-    const [photoUri, setPhotoUri] =  useState<string | null>(null);
-    const [taskTitle, setTaskTitle] = useState<string>('');
+export default function NewTask({ onClose, onTaskSave, initialTask }: NewTaskProps) {
+    const [photoUri, setPhotoUri] =  useState<string | null>(initialTask?.photoUri || null);
+    const [taskTitle, setTaskTitle] = useState<string>(initialTask?.title || '');
     const [isCapturingPhoto, setIsCapturingPhoto] = useState<boolean>(false);   
     const [isSaving, setIsSaving] = useState<boolean>(false);
+    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
     const { user } = useAuth();
     async function handleTakePhoto() {
       console.log('handleTakePhoto called');
@@ -47,7 +52,19 @@ export default function NewTask({ onClose, onTaskSave }: NewTaskProps) {
             })
 
             if (!result.canceled && result.assets.length > 0) {
-                setPhotoUri(result.assets[0].uri);
+                // compress/resize immediately to reduce upload size and avoid 413
+                try {
+                  const originalUri = result.assets[0].uri;
+                  const manip = await ImageManipulator.manipulateAsync(
+                    originalUri,
+                    [{ resize: { width: 1024 } }],
+                    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+                  );
+                  setPhotoUri(manip.uri);
+                } catch (e) {
+                  // fallback to original if manipulation fails
+                  setPhotoUri(result.assets[0].uri);
+                }
             }   
         } catch (error) {
             console.error('Error al tomar la foto:', error);
@@ -70,24 +87,56 @@ export default function NewTask({ onClose, onTaskSave }: NewTaskProps) {
             accuracy: Accuracy.Balanced
           });
           location = {
-            latitude: locationResult.coords.latitude.toFixed(6).toString(),
-            longitude: locationResult.coords.longitude.toFixed(6).toString(),
+            latitude: Number(locationResult.coords.latitude.toFixed(6).toString()),
+            longitude: Number(locationResult.coords.longitude.toFixed(6).toString()),
           };
         }
 
-        const newTask: Task = {
-          id: Math.random().toString(36).substr(2, 9), //genera un id aleatorio simple
+        const todoClient = getTodoService();
+        const payload = {
           title: taskTitle,
-          completed: false,
+          completed: initialTask ? initialTask.completed : false,
           photoUri: photoUri || undefined,
-          coordinates: location || {  
-            latitude: '0.000000',
-            longitude: '0.000000',
-          },
-          userId: user ? user.id : '',
+          location: location || (initialTask?.location || { latitude: 0, longitude: 0 }),
         };
-        onTaskSave?.(newTask);
-        onClose();
+
+        // Upload image if local file
+        if (photoUri && !photoUri.startsWith('http')) {
+          try {
+            setUploadProgress(0);
+            const uploadRes = await imageService.uploadImage(photoUri, (p) => setUploadProgress(p));
+            payload.photoUri = uploadRes.data?.url || uploadRes.url || payload.photoUri;
+            setUploadProgress(null);
+          } catch (err) {
+            console.error('Image upload failed', err);
+            Alert.alert('Error', 'No se pudo subir la imagen. Inténtalo de nuevo.');
+            setIsSaving(false);
+            setUploadProgress(null);
+            return;
+          }
+        }
+
+        try {
+          if (initialTask) {
+            const updated = await todoClient.patchTodo(initialTask.id, payload);
+            onTaskSave?.(updated.data);
+            // if image was replaced, attempt to delete previous remote image
+            try {
+              if (initialTask.photoUri && initialTask.photoUri !== payload.photoUri && initialTask.photoUri.startsWith('http')) {
+                await imageService.deleteImageByUrl(initialTask.photoUri);
+              }
+            } catch (e) {
+              console.warn('Failed to delete previous image', e);
+            }
+          } else {
+            const created = await todoClient.createTodo(payload);
+            onTaskSave?.(created.data);
+          }
+          onClose();
+        } catch (err) {
+          console.error('Todo save failed', err);
+          Alert.alert('Error', 'No se pudo guardar la tarea. Inténtalo de nuevo.');
+        }
       } catch (error) {
         console.error('Error al guardar la tarea:', error);
         Alert.alert('Error', 'No se pudo guardar la tarea. Inténtalo de nuevo.');
@@ -108,7 +157,7 @@ export default function NewTask({ onClose, onTaskSave }: NewTaskProps) {
     const stylesWithTheme = [styles.input, { borderColor: colors.icon, color: colors.text, backgroundColor: scheme === 'dark' ? '#1a1a1a' : '#ffffff' }];
     return ( //operador ternario ) : ( basicamente un if else
             <Animated.View style={[styles.wrapper, { transform: [{ translateY }], opacity }]}> 
-                    <Title style={{ fontSize: 24, marginBottom: 8 }}> Añadir Nueva Tarea </Title>
+                    <Title style={{ fontSize: 24, marginBottom: 8 }}>{initialTask ? 'Editar Tarea' : 'Añadir Nueva Tarea'}</Title>
                 <View style={styles.inputContainer}>
                   <TextInput
                     style={stylesWithTheme}
@@ -133,8 +182,13 @@ export default function NewTask({ onClose, onTaskSave }: NewTaskProps) {
                 </>
                 )}
                 <Button type="outlined" text={photoUri ? "Volver a tomar foto" : "Tomar Foto"} onPress={handleTakePhoto} disabled={isCapturingPhoto} />
+                {uploadProgress !== null && (
+                  <View style={{ height: 8, width: '100%', backgroundColor: '#eee', borderRadius: 4, overflow: 'hidden', marginTop: 8 }}>
+                    <View style={{ width: `${uploadProgress}%`, height: '100%', backgroundColor: colors.tint }} />
+                  </View>
+                )}
                 <View style={{gap:12,flexDirection:'column', marginTop: 12}}>
-                    <Button type='primary' text='Guardar Tarea' onPress={handleSaveTask} disabled={isSaving || taskTitle.trim().length === 0} /> 
+                    <Button type='primary' text={initialTask ? 'Guardar cambios' : 'Guardar Tarea'} onPress={handleSaveTask} disabled={isSaving || taskTitle.trim().length === 0} /> 
                     <Button type='danger' text='Cancelar' onPress={onClose} />
                 </View>
               </Animated.View>

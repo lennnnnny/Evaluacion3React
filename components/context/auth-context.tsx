@@ -1,37 +1,49 @@
+import { setUnauthorizedHandler } from '@/services/api';
 import getAuthService from '@/services/auth-service';
-import { clearSessionFromStorage, loadSessionFromStorage, saveSessionToStorage } from '@/utils/storage';
+import { clearAuthToken, getAuthToken, saveAuthToken } from '@/utils/storage';
 import { useRouter } from 'expo-router';
+import { jwtDecode } from 'jwt-decode';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
-
-
-
-
-
-
 
 export interface User{
     id: string;
     name: string;
+    token: string;
 }
 interface AuthContextProps {
     user: User | null;
     login: (email: string, password: string) => void;
     logout: () => void;
+    loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
+    const decodeJwtFn = (jwtDecode as any).default ? (jwtDecode as any).default : jwtDecode;
     const [user, setUser] = useState<User | null>(null);
     const router = useRouter();
+    const [loading, setLoading] = useState<boolean>(true);
     useEffect(() => {
-        loadSessionFromStorage()
-        .then((storedUser) => {
-            if (storedUser) {
-                setUser(storedUser);
+        setUnauthorizedHandler(() => {
+            logout();
+        });
+
+        getAuthToken()
+        .then((token) => {
+            if (token) {
+                try {
+                    const decoded = decodeJwtFn(token) as { sub: string };
+                    const u: User = { id: decoded.sub, name: decoded.sub, token };
+                    setUser(u);
+                } catch (e) {
+                    // invalid token
+                    setUser(null);
+                }
             }
         })
+        .finally(() => setLoading(false));
     }, []);
 
     useEffect(() => {
@@ -43,23 +55,30 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     const login = async (email: string, password: string) => {
         const authClient = getAuthService();
+        setLoading(true);
         try {
             const loginData = await authClient.login({email:email, password:password});
-            console.log("Login exitoso:", loginData);
-            saveSessionToStorage(loginData.data);
-            setUser(loginData.data.user);
+            const token = loginData.data.token;
+            const decodedToken = decodeJwtFn(token) as { sub: string };
+            const u: User = { id: decodedToken.sub, name: decodedToken.sub, token };
+            setUser(u);
+            await saveAuthToken(token);
+            console.log('Login Successful', decodedToken);
         } catch (error) {
             Alert.alert("Error de auntenticación", (error as Error).message);
+        } finally {
+            setLoading(false);
         }
     };
 
     const logout = () => {
         setUser(null);
-        clearSessionFromStorage();
+        clearAuthToken();
+        router.replace('/login');
     }
 
     return (
-        <AuthContext.Provider value={{ user, login, logout}}>
+        <AuthContext.Provider value={{ user, login, logout, loading}}>
             {children}
         </AuthContext.Provider>
     );

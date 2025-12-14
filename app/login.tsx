@@ -1,5 +1,6 @@
 import { useAuth } from '@/components/context/auth-context';
 import { useTheme } from '@/components/context/theme-context';
+import Button from '@/components/ui/button';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -7,22 +8,21 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableWithoutFeedback,
-  View,
+  View
 } from 'react-native';
 
 export default function LoginScreen() {
   // Estados para almacenar el nombre de usuario y la contraseña
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const {login} = useAuth();
+  const {login, loading} = useAuth();
   const { colors, scheme } = useTheme();
-  
+
   // Hook para la navegación
   const router = useRouter();
 
@@ -36,11 +36,10 @@ export default function LoginScreen() {
   }
 
   // Función para manejar el inicio de sesión
-  const handleLogin = () => {
-    // lógica implementada para user y 1234
-     try {
-      login(username, password);
-      router.replace('/(tabs)'); // Navegar a la pantalla principal después del login exitoso
+  const handleLogin = async () => {
+    try {
+      await login(username, password);
+      // let AuthProvider perform navigation when user is set
     } catch (error) {
       Alert.alert('Login failed', (error as Error).message);
     }
@@ -56,7 +55,7 @@ export default function LoginScreen() {
             <Text style={[styles.inputContainer, { color: colors.text }]}>Login Screen</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.icon, backgroundColor: scheme === 'dark' ? '#2a2a2a' : '#f7f7f7', color: colors.text }]}
-              placeholder="Username o Email"
+              placeholder="Email"
               placeholderTextColor={colors.icon}
               onChangeText={handleUsernameChange}
               value={username}
@@ -77,9 +76,7 @@ export default function LoginScreen() {
               textContentType="password"
             />
 
-            <Pressable style={[styles.button, { backgroundColor: colors.tint }]} onPress={handleLogin}>
-              <Text style={{ color: colors.background }}>Login</Text>
-            </Pressable>
+            <Button text= 'Login' style={styles.button} onPress={handleLogin} disabled={loading}/>
           </View>
         </TouchableWithoutFeedback>
       </ScrollView>
@@ -129,5 +126,6 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#5c449fff',
     borderRadius: 5,
+    width: '100%',
   },
 }); 

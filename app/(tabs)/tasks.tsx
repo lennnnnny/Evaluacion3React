@@ -1,13 +1,15 @@
 import { useAuth } from "@/components/context/auth-context";
 import { useTheme } from '@/components/context/theme-context';
+import Button from '@/components/ui/button';
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import NewTask from "@/components/ui/new-task";
 import TaskListItem from "@/components/ui/task-list.item";
 import Title from "@/components/ui/title";
 import { Task } from "@/constants/types";
-import { loadTodosFromStorage, saveTodosToStorage } from "@/utils/storage";
+import imageService from '@/services/image-service';
+import getTodoService from '@/services/todo-services';
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, LayoutAnimation, Pressable, StyleSheet, TouchableOpacity } from "react-native";
+import { Alert, Animated, LayoutAnimation, Pressable, StyleSheet, TouchableOpacity } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -21,7 +23,10 @@ export default function TaskScreen() {
   const { user } = useAuth();
   const { colors, toggleScheme, scheme } = useTheme();
   const [todos, setTodos] = useState<Task[]>([]) ;
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const [creatingNew, setCreatingNew] = useState<boolean>(false);
+  const [editingTask, setEditingTask] = useState<any | null>(null);
   const userTodos = todos; // todos will be loaded per user
   const fabScale = useRef(new Animated.Value(1)).current;
   function handleFabPressIn() {
@@ -32,14 +37,24 @@ export default function TaskScreen() {
   }
   const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 useEffect (() => {
-  if (!user) {
-    setTodos([]);
-    return;
+  const todoClient = getTodoService();
+  async function load() {
+    if (!user) {
+      setTodos([]);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await todoClient.getTodos();
+      setTodos(res.data || []);
+    } catch (err: any) {
+      setError(err.message || 'Error cargando tareas');
+    } finally {
+      setLoading(false);
+    }
   }
-  loadTodosFromStorage(user.id)
-    .then(loadedTodos => {
-      setTodos(loadedTodos);
-    });
+  load();
 }, [user]);
 
   // createTask removed: using addTodo with persistence instead
@@ -49,26 +64,53 @@ useEffect (() => {
     //si el id de la tarea es igual al id pasado por parametro, cambia su estado de completado
     //si no, devuelve la tarea sin cambios
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setTodos(prevTodos => {
-      const updatedTodos = prevTodos.map(todo => 
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      );
-      if (user) saveTodosToStorage(updatedTodos, user.id);
-      return updatedTodos;
-    });
+    // optimistic update + backend
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setTodos(prevTodos => prevTodos.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+    (async () => {
+      try {
+        const todoClient = getTodoService();
+        const target = todos.find(t => t.id === id);
+        if (!target) return;
+        await todoClient.patchTodo(id, { completed: !target.completed });
+      } catch (err) {
+        // revert on error
+        setTodos(prevTodos => prevTodos.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+        Alert.alert('Error', 'No se pudo actualizar el estado de la tarea. Inténtalo de nuevo.');
+      }
+    })();
   }
 
   const handleNewTaskClose = () => {
     setCreatingNew(false);
+    setEditingTask(null);
   }
 
   const removeTodo = (id: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setTodos(prevTodos => {
-      const updatedTodos = prevTodos.filter(todo => todo.id !== id);
-      if (user) saveTodosToStorage(updatedTodos, user.id);
-      return updatedTodos;
-    });
+    // optimistic remove + backend
+    const prev = todos;
+    const todoToDelete = prev.find(t => t.id === id);
+    setTodos(prev.filter(t => t.id !== id));
+    (async () => {
+      try {
+        const todoClient = getTodoService();
+        await todoClient.deleteTodo(id);
+        // if the todo had an uploaded image, attempt to delete it from the images service
+        try {
+          if (todoToDelete?.photoUri && todoToDelete.photoUri.startsWith('http')) {
+            await imageService.deleteImageByUrl(todoToDelete.photoUri);
+          }
+        } catch (imgErr) {
+          // ignore image deletion errors
+          console.warn('Image delete failed', imgErr);
+        }
+      } catch (err) {
+        // revert
+        setTodos(prev);
+        Alert.alert('Error', 'No se pudo eliminar la tarea. Inténtalo de nuevo.');
+      }
+    })();
   }
 
   function addTodo(task: Task) {
@@ -77,16 +119,32 @@ useEffect (() => {
     setTodos((prevTodos) => {
       const taskWithUser = { ...task, userId: user ? user.id : task.userId };
       const updatedTodos = [...prevTodos, taskWithUser];
-      if (user) saveTodosToStorage(updatedTodos, user.id);
       return updatedTodos;
     });
     setCreatingNew(false);
   }
 
+  const handleCreatedOrUpdated = (item: any) => {
+    setTodos(prev => {
+      const exists = prev.find(t => t.id === item.id);
+      if (exists) {
+        return prev.map(t => t.id === item.id ? item : t);
+      }
+      return [...prev, item];
+    });
+    setCreatingNew(false);
+    setEditingTask(null);
+  }
+
+  const handleEdit = (task: any) => {
+    setEditingTask(task);
+    setCreatingNew(true);
+  }
+
   if (creatingNew) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}> 
-      <NewTask onClose={handleNewTaskClose} onTaskSave={addTodo} />
+      <NewTask onClose={handleNewTaskClose} onTaskSave={handleCreatedOrUpdated} initialTask={editingTask} />
       </SafeAreaView>
     )
   }
@@ -100,15 +158,28 @@ useEffect (() => {
         <IconSymbol name={scheme === 'dark' ? 'sun.max' : 'moon'} size={20} color={colors.icon} />
       </TouchableOpacity>
         
+      {loading && (<Title> Cargando... </Title>)}
+      {error && (
+        <>
+          <Title> Error: {error} </Title>
+          <Button text='Reintentar' onPress={() => {
+            setError(null);
+            setLoading(true);
+            const todoClient = getTodoService();
+            todoClient.getTodos().then(res => setTodos(res.data || [])).catch(e => setError(e.message || 'Error cargando tareas')).finally(()=>setLoading(false));
+          }} />
+        </>
+      )}
       {userTodos.map((todo) => (
         <TaskListItem 
         key={todo.id} 
         task={todo} 
         onToggle={toggleTodo} 
-        onRemove={removeTodo} />
+        onRemove={removeTodo} 
+        onEdit={handleEdit} />
       ))} 
       <AnimatedPressable
-        onPress={() => setCreatingNew(true)}
+        onPress={() => { setEditingTask(null); setCreatingNew(true); }}
         onPressIn={handleFabPressIn}
         onPressOut={handleFabPressOut}
         style={[{ transform: [{ scale: fabScale }] }, styles.newTaskButton, { backgroundColor: colors.tint } as any]}

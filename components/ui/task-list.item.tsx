@@ -9,9 +9,10 @@ interface TaskItemProps {
    task: Task;
    onToggle?: (id: string) => void;
    onRemove?: (id: string) => void;
+   onEdit?: (task: Task) => void;
 }
 
-export default function TaskListItem({ task, onToggle, onRemove }: TaskItemProps) {
+export default function TaskListItem({ task, onToggle, onRemove, onEdit }: TaskItemProps) {
    const { colors } = useTheme();
    const styles = getStyles(colors);
     const opacity = useRef(new Animated.Value(0)).current;
@@ -39,20 +40,25 @@ export default function TaskListItem({ task, onToggle, onRemove }: TaskItemProps
             <Text style={[styles.title, task.completed && styles.completedTitle]} numberOfLines={2} ellipsizeMode="tail">
                {task.title}
             </Text>
-            {task.coordinates && (
+            {task.location && (
                <View style={styles.locationRow}>
                   <IconSymbol name="mappin" size={12} color={colors.icon} />
                   <Text style={styles.locationText} numberOfLines={1} ellipsizeMode="tail">
-                     {task.coordinates.latitude}, {task.coordinates.longitude}
+                     {task.location.latitude}, {task.location.longitude}
                   </Text>
                </View>
             )}
          </View>
 
 
-         <TouchableOpacity onPress={() => onRemove?.(task.id)}  style={styles.removeButton}>
-          <IconSymbol name="trash.circle" size={24} color={colors.icon} />
-         </TouchableOpacity>
+             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TouchableOpacity onPress={() => onEdit?.(task)} style={{ paddingRight: 8 }}>
+                   <IconSymbol name="pencil" size={20} color={colors.icon} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => onRemove?.(task.id)}  style={styles.removeButton}>
+                   <IconSymbol name="trash.circle" size={24} color={colors.icon} />
+                </TouchableOpacity>
+             </View>
       </Animated.View>
    );
 }

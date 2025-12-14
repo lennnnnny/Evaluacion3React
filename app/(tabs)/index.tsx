@@ -14,7 +14,7 @@ export default function HomeScreen() {
   //el modal se abre con un enlace que usa la etiqueta <Link> y se le asigna la ruta del modal en el atributo href
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>  
-      <Text style={[styles.titleText, { color: colors.text }]}>Hola!, {user?.name}</Text>
+      <Text style={[styles.titleText, { color: colors.text }]}>Bienvenido!, {user?.name}</Text>
     </View>
   );
 }

@@ -33,7 +33,7 @@ export default function getAuthService() {
     //funciones register y login
     async function register(RegisterPayload: RegisterPayload) {
         try {
-        const response = await apiClient.post('/login', RegisterPayload) //en caso de que este dato pase se retorna la response data
+        const response = await apiClient.post('/register', RegisterPayload) //en caso de que este dato pase se retorna la response data
         return response.data;
         } catch (error) {
             if (isAxiosError(error) && error.response) {
@@ -42,7 +42,8 @@ export default function getAuthService() {
                 } else  {
                     throw new ServiceError(`Cliente falló con estatus ${error.response.status}`)
                 }
-            } 
+            }
+            console.log(error); 
             throw error;
         }
     }
@@ -58,6 +59,7 @@ export default function getAuthService() {
                     throw new ServiceError(`Cliente falló con estatus ${error.response.status}`)
                 }
             }
+            console.log(error);
             throw error;
         }
     }

@@ -1,50 +1,101 @@
-# Welcome to your Expo app 👋
+﻿# Aplicación Expo  Lista de Tareas
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Esta es una aplicación desarrollada con [Expo](https://expo.dev) y usa enrutamiento basado en archivos (`expo-router`).
 
-## Get started
+## Comenzar (rápido)
 
-1. Install dependencies
+1. Instalar dependencias
 
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
-2. Start the app
+2. Iniciar la aplicación
 
-   ```bash
-   npx expo start
-   ```
+```bash
+npx expo start
+```
 
-In the output, you'll find options to open the app in a
+En la salida verás opciones para abrir la app en:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- un build de desarrollo
+- emulador Android
+- simulador iOS
+- Expo Go
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Puedes comenzar a desarrollar editando los archivos dentro del directorio `app/`.
+# iniciar en modo desarrollo
+npx expo start
 
-## Get a fresh project
+# iniciar con cache limpia (útil si recibes errores de bundling)
+npx expo start -c
 
-When you're ready, run:
+# reinstalar dependencias
+```
+
+## Reescribir proyecto de ejemplo
+Si quieres recuperar el proyecto inicial de ejemplo ejecuta:
 
 ```bash
 npm run reset-project
 ```
+Este comando moverá el código inicial a la carpeta `app-example` y creará un directorio `app` vacío.
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Estructura y rutas principales
 
-## Learn more
+La aplicación usa `expo-router` con una estructura basada en archivos dentro de `app/`.
 
-To learn more about developing your project with Expo, look at the following resources:
+- `app/login.tsx`  pantalla de inicio de sesión.
+- `app/(tabs)/tasks.tsx`  listado y CRUD de tareas.
+- `components/`  componentes reutilizables (UI y contextos).
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Autores
 
-## Join the community
+Proyecto desarrollado por:
 
-Join our community of developers creating universal apps.
+- Lenny Rodríguez  Desarrollo de funcionalidades, integración con backend y autenticación.
+- Claudio Escobar  Implementación Login utilizando backend 
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Ambos autores colaboraron en la arquitectura, las decisiones de diseño y la depuración.
+
+## Uso de IA
+
+Durante el desarrollo se contó con asistencia de IA para apoyo en:
+
+- generación y revisión de código,
+- propuestas de mejoras visuales y de UX,
+- depuración y diagnóstico de errores,
+- redacción y actualización de documentación.
+
+Las sugerencias automáticas fueron revisadas y validadas por los autores; las decisiones finales, la integración y el control de calidad fueron realizadas por Lenny Rodríguez y Claudio Escobar.
+
+## Integración con la API
+
+La aplicación se integra con una API externa para la gestión de tareas y autenticación. Puntos importantes:
+
+- La URL base de la API está configurada en `constants/config.ts`.
+- La autenticación usa JWT; el token se guarda en `AsyncStorage` y se envía en el header `Authorization: Bearer <token>`.
+- Las tareas se obtienen/crean/actualizan/eliminan desde el backend (`/todos`).
+- Las imágenes se suben mediante `POST /images` (multipart) y se eliminan con `DELETE /images/:key`.
+
+## Errores comunes y soluciones rápidas
+
+- Si obtienes errores de bundling o módulos no encontrados, limpia el cache e reinicia Metro:
+
+```bash
+npx expo start -c
+```
+
+- Si al subir imágenes obtienes `413 Payload Too Large`, la app aplica una reducción de resolución y compresión antes de subir (ver `components/ui/new-task.tsx`). Si necesitas más control, puedo añadir verificación de tamaño y compresión iterativa con `expo-file-system`.
+
+## Licencia / Uso
+
+Este repositorio incluye trabajo de los autores mencionados y contribuciones asistidas por IA. Usa y modifica el código según lo permita la licencia de tu organización o la que desees aplicar.
+
+## Demostración
+
+Video de desmotración de la app:
+
+[Ver demo en YouTube](https://youtube.com/shorts/qPHYh726q9Q)
+
+
