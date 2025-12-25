@@ -24,6 +24,22 @@ export interface GetTodosResponse {
   count: number;
 }
 
+export interface CreateTodoResponse {
+  success: boolean;
+  data: TodoItem;
+}
+
+export interface UpdateTodoResponse {
+  success: boolean;
+  data: TodoItem;
+}
+
+export interface DeleteTodoResponse {
+  success: boolean;
+  data: TodoItem;
+  message: string;
+}
+
 export default function getTodoService() {
   async function getTodos(): Promise<GetTodosResponse> {
     return await api.get('/todos');

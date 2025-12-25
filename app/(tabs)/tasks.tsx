@@ -5,9 +5,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import NewTask from "@/components/ui/new-task";
 import TaskListItem from "@/components/ui/task-list.item";
 import Title from "@/components/ui/title";
-import { Task } from "@/constants/types";
-import imageService from '@/services/image-service';
-import getTodoService from '@/services/todo-services';
+import { deleteImageByUrl } from '@/services/image-service';
 import React, { useEffect, useRef, useState } from "react";
 import { Alert, Animated, LayoutAnimation, Pressable, StyleSheet, TouchableOpacity } from "react-native";
 
@@ -22,13 +20,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function TaskScreen() {
   const { user } = useAuth();
   const { colors, toggleScheme, scheme } = useTheme();
-  const [todos, setTodos] = useState<Task[]>([]) ;
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const { todos, loading, error, loadTodos, deleteTodo, toggleTodo, patchTodo } = useTodos();
   const [creatingNew, setCreatingNew] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<any | null>(null);
   const userTodos = todos; // todos will be loaded per user
   const fabScale = useRef(new Animated.Value(1)).current;
+  
   function handleFabPressIn() {
     Animated.spring(fabScale, { toValue: 0.96, useNativeDriver: true }).start();
   }
@@ -36,104 +33,51 @@ export default function TaskScreen() {
     Animated.spring(fabScale, { toValue: 1, friction: 3, useNativeDriver: true }).start();
   }
   const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-useEffect (() => {
-  const todoClient = getTodoService();
-  async function load() {
+
+  useEffect (() => {
     if (!user) {
-      setTodos([]);
       return;
     }
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await todoClient.getTodos();
-      setTodos(res.data || []);
-    } catch (err: any) {
-      setError(err.message || 'Error cargando tareas');
-    } finally {
-      setLoading(false);
-    }
-  }
-  load();
-}, [user]);
-
-  // createTask removed: using addTodo with persistence instead
-
-  const toggleTodo = (id: string) => {
-    //utiliza el map para recorrer el array y cambiar el estado de completado
-    //si el id de la tarea es igual al id pasado por parametro, cambia su estado de completado
-    //si no, devuelve la tarea sin cambios
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    // optimistic update + backend
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setTodos(prevTodos => prevTodos.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
-    (async () => {
-      try {
-        const todoClient = getTodoService();
-        const target = todos.find(t => t.id === id);
-        if (!target) return;
-        await todoClient.patchTodo(id, { completed: !target.completed });
-      } catch (err) {
-        // revert on error
-        setTodos(prevTodos => prevTodos.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
-        Alert.alert('Error', 'No se pudo actualizar el estado de la tarea. Inténtalo de nuevo.');
-      }
-    })();
-  }
+    loadTodos();
+  }, [user, loadTodos]);
 
   const handleNewTaskClose = () => {
     setCreatingNew(false);
     setEditingTask(null);
   }
 
-  const removeTodo = (id: string) => {
+  const removeTodo = async (id: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    // optimistic remove + backend
-    const prev = todos;
-    const todoToDelete = prev.find(t => t.id === id);
-    setTodos(prev.filter(t => t.id !== id));
-    (async () => {
+    const todoToDelete = todos.find(t => t.id === id);
+    try {
+      await deleteTodo(id);
+      // if the todo had an uploaded image, attempt to delete it from the images service
       try {
-        const todoClient = getTodoService();
-        await todoClient.deleteTodo(id);
-        // if the todo had an uploaded image, attempt to delete it from the images service
-        try {
-          if (todoToDelete?.photoUri && todoToDelete.photoUri.startsWith('http')) {
-            await imageService.deleteImageByUrl(todoToDelete.photoUri);
-          }
-        } catch (imgErr) {
-          // ignore image deletion errors
-          console.warn('Image delete failed', imgErr);
+        if (todoToDelete?.photoUri && todoToDelete.photoUri.startsWith('http')) {
+          await deleteImageByUrl(todoToDelete.photoUri);
         }
-      } catch (err) {
-        // revert
-        setTodos(prev);
-        Alert.alert('Error', 'No se pudo eliminar la tarea. Inténtalo de nuevo.');
+      } catch (imgErr) {
+        // ignore image deletion errors
+        console.warn('Image delete failed', imgErr);
       }
-    })();
+    } catch (err) {
+      Alert.alert('Error', 'No se pudo eliminar la tarea. Inténtalo de nuevo.');
+    }
   }
 
-  function addTodo(task: Task) {
-    if (task.title.trim().length === 0) return;
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setTodos((prevTodos) => {
-      const taskWithUser = { ...task, userId: user ? user.id : task.userId };
-      const updatedTodos = [...prevTodos, taskWithUser];
-      return updatedTodos;
-    });
-    setCreatingNew(false);
+  const handleToggleTodo = async (id: string) => {
+    try {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      await toggleTodo(id);
+    } catch (err) {
+      Alert.alert('Error', 'No se pudo actualizar el estado de la tarea. Inténtalo de nuevo.');
+    }
   }
 
   const handleCreatedOrUpdated = (item: any) => {
-    setTodos(prev => {
-      const exists = prev.find(t => t.id === item.id);
-      if (exists) {
-        return prev.map(t => t.id === item.id ? item : t);
-      }
-      return [...prev, item];
-    });
     setCreatingNew(false);
     setEditingTask(null);
+    loadTodos();
   }
 
   const handleEdit = (task: any) => {
@@ -163,10 +107,7 @@ useEffect (() => {
         <>
           <Title> Error: {error} </Title>
           <Button text='Reintentar' onPress={() => {
-            setError(null);
-            setLoading(true);
-            const todoClient = getTodoService();
-            todoClient.getTodos().then(res => setTodos(res.data || [])).catch(e => setError(e.message || 'Error cargando tareas')).finally(()=>setLoading(false));
+            loadTodos();
           }} />
         </>
       )}
@@ -174,7 +115,7 @@ useEffect (() => {
         <TaskListItem 
         key={todo.id} 
         task={todo} 
-        onToggle={toggleTodo} 
+        onToggle={handleToggleTodo} 
         onRemove={removeTodo} 
         onEdit={handleEdit} />
       ))} 

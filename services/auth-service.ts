@@ -12,18 +12,19 @@ export interface LoginPayload {
     password: string;
 }
 //interfaces body response
+export interface AuthData {
+    token: string;
+    userId: string;
+}
+
 export interface LoginResponse{
     success: boolean;
-    data: {
-        token: string;
-    };
+    data: AuthData;
 }
 export interface RegisterResponse{
     success: boolean;
-    data: { 
-         token: string;
-    };
-    };
+    data: AuthData;
+};
 
 export default function getAuthService() {
     const apiClient = axios.create({

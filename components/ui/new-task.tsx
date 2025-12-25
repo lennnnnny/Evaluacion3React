@@ -1,13 +1,12 @@
 import { useTheme } from '@/components/context/theme-context';
 import { Task } from '@/constants/types';
-import imageService from '@/services/image-service';
+import { deleteImageByUrl, uploadImage } from '@/services/image-service';
 import getTodoService from '@/services/todo-services';
-import * as ImageManipulator from 'expo-image-manipulator';
+// import * as ImageManipulator from 'expo-image-manipulator';
 import { launchCameraAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 import { Accuracy, getCurrentPositionAsync, requestForegroundPermissionsAsync } from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useAuth } from '../context/auth-context';
 import Button from './button';
 import Title from './title';
 
@@ -23,7 +22,7 @@ export default function NewTask({ onClose, onTaskSave, initialTask }: NewTaskPro
     const [isCapturingPhoto, setIsCapturingPhoto] = useState<boolean>(false);   
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-    const { user } = useAuth();
+    // const { user } = useAuth();
     async function handleTakePhoto() {
       console.log('handleTakePhoto called');
         //lógica para obtener ubicación
@@ -55,13 +54,14 @@ export default function NewTask({ onClose, onTaskSave, initialTask }: NewTaskPro
                 // compress/resize immediately to reduce upload size and avoid 413
                 try {
                   const originalUri = result.assets[0].uri;
-                  const manip = await ImageManipulator.manipulateAsync(
-                    originalUri,
-                    [{ resize: { width: 1024 } }],
-                    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-                  );
-                  setPhotoUri(manip.uri);
-                } catch (e) {
+                  // const manip = await ImageManipulator.manipulateAsync(
+                  //   originalUri,
+                  //   [{ resize: { width: 1024 } }],
+                  //   { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+                  // );
+                  // setPhotoUri(manip.uri);
+                  setPhotoUri(originalUri);
+                } catch {
                   // fallback to original if manipulation fails
                   setPhotoUri(result.assets[0].uri);
                 }
@@ -104,7 +104,7 @@ export default function NewTask({ onClose, onTaskSave, initialTask }: NewTaskPro
         if (photoUri && !photoUri.startsWith('http')) {
           try {
             setUploadProgress(0);
-            const uploadRes = await imageService.uploadImage(photoUri, (p) => setUploadProgress(p));
+            const uploadRes = await uploadImage(photoUri, (p) => setUploadProgress(p));
             payload.photoUri = uploadRes.data?.url || uploadRes.url || payload.photoUri;
             setUploadProgress(null);
           } catch (err) {
@@ -123,7 +123,7 @@ export default function NewTask({ onClose, onTaskSave, initialTask }: NewTaskPro
             // if image was replaced, attempt to delete previous remote image
             try {
               if (initialTask.photoUri && initialTask.photoUri !== payload.photoUri && initialTask.photoUri.startsWith('http')) {
-                await imageService.deleteImageByUrl(initialTask.photoUri);
+                await deleteImageByUrl(initialTask.photoUri);
               }
             } catch (e) {
               console.warn('Failed to delete previous image', e);
