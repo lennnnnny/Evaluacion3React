@@ -12,9 +12,16 @@ export interface LoginPayload {
     password: string;
 }
 //interfaces body response
+export interface UserData {
+    id: string;
+    email: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface AuthData {
+    user: UserData;
     token: string;
-    userId: string;
 }
 
 export interface LoginResponse{

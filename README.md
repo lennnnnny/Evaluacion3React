@@ -99,3 +99,12 @@ Video de desmotración de la app:
 [Ver demo en YouTube](https://youtube.com/shorts/qPHYh726q9Q)
 
 
+## Preguntas de examen
+
+En este apartado hemos dispuesto los videos que responden a las preguntas planteadas en el examen
+
+[Pregunta 1](https://drive.google.com/file/d/12hlUWJlDABdWuTZSPK3zHhei6HOrPm7g/view?usp=drive_link)
+[Pregunta 2](https://drive.google.com/file/d/1C2ZdH1zwcQZsz4rGtKHERYinKqFcOmzO/view?usp=drive_link)
+[Pregunta 3](https://drive.google.com/file/d/1YPBO4QY4u9PzSbfPL9CTbMKDvOGfqYEU/view?usp=drive_link)
+[Pregunta 4](https://drive.google.com/file/d/1tjUAPdZvVS6XWk_6viCIreSXaqVlrRiE/view?usp=drive_link)
+

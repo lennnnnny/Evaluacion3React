@@ -59,9 +59,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         try {
             const loginData = await authClient.login({email:email, password:password});
             const token = loginData.data.token;
-            const userId = loginData.data.userId;
+            const userId = loginData.data.user.id;
+            const userEmail = loginData.data.user.email;
             const decodedToken = decodeJwtFn(token) as { sub: string };
-            const u: User = { id: userId, name: userId, token };
+            const u: User = { id: userId, name: userEmail, token };
             setUser(u);
             await saveAuthToken(token);
             console.log('Login Successful', decodedToken);
